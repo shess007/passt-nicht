@@ -1,5 +1,5 @@
 import type * as Party from "partykit/server";
-import type { ClientAction, GameState, ServerEvent } from "../src/game/types";
+import type { ClientAction, GameState, JokerWish, ServerEvent } from "../src/game/types";
 import {
   createInitialState,
   startRound,
@@ -189,7 +189,7 @@ export default class PasstNichtServer implements Party.Server {
     this.broadcastState();
   }
 
-  handleJokerWish(conn: Party.Connection, wish: ClientAction extends { type: "joker_wish" } ? ClientAction["wish"] : never) {
+  handleJokerWish(conn: Party.Connection, wish: JokerWish) {
     if (!this.state) return;
     const result = applyJokerWish(this.state, conn.id, wish as any);
     if ("error" in result) {

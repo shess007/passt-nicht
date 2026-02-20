@@ -1,7 +1,7 @@
 // ─── Card Types ───────────────────────────────────────────────────
 export type CardColor = "red" | "blue" | "green" | "yellow";
 export const CARD_COLORS: CardColor[] = ["red", "blue", "green", "yellow"];
-export const CARD_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+export const CARD_NUMBERS = [0, 1, 2, 3, 4, 5] as const;
 export type CardNumber = (typeof CARD_NUMBERS)[number];
 
 export interface Card {

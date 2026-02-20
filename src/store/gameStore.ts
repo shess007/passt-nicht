@@ -37,7 +37,7 @@ interface GameStore {
 const PARTY_HOST =
   typeof window !== "undefined" && window.location.hostname === "localhost"
     ? "localhost:1999"
-    : window.location.host;
+    : "https://passt-nicht.shess007.partykit.dev";
 
 export const useGameStore = create<GameStore>((set, get) => ({
   socket: null,
