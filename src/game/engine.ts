@@ -304,7 +304,7 @@ function endRound(state: GameState): GameState {
     // Hand cards = negative points
     let handPenalty = 0;
     for (const card of p.hand) {
-      handPenalty += isJoker(card) ? 5 : (card as Card).number;
+      handPenalty += isJoker(card) ? 10 : (card as Card).number;
     }
 
     return displayPoints - handPenalty;
