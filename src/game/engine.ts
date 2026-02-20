@@ -227,6 +227,13 @@ export function playToDisplay(
   if (state.phase !== "playing") return { error: "Game not in progress" };
 
   const player = { ...state.players[pIdx] };
+
+  // If any display card matches the discard pile, player must discard instead
+  const playable = getPlayableCards(player, state);
+  if (playable.fromDisplay.length > 0) {
+    return { error: "You must discard a matching card from your display" };
+  }
+
   const cardIdx = player.hand.findIndex((c) => c.id === cardId);
   if (cardIdx === -1) return { error: "Card not in hand" };
 
