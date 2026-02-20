@@ -1,4 +1,4 @@
-import type { AnyCard } from "../game/types";
+import type { AnyCard, Card } from "../game/types";
 import { isJoker } from "../game/types";
 import { useDrag } from "../hooks/useDrag";
 
@@ -49,16 +49,29 @@ export function CardView({
       style={draggable ? { touchAction: "none" } : undefined}
     >
       {joker ? (
-        <>
+        <div className="card-joker-layout">
           <span className="card-joker-icon">✦</span>
-          <span className="card-color-label">Joker</span>
-        </>
+          <span className="card-joker-label">Joker</span>
+        </div>
       ) : (
         <>
-          <span className="card-number">{card.number}</span>
-          <span className="card-color-label">
-            {COLOR_SYMBOLS[card.color]} {card.color}
-          </span>
+          {/* Top-left corner */}
+          <div className="card-corner">
+            <span>{(card as Card).number}</span>
+            <span className="card-corner-symbol">{COLOR_SYMBOLS[(card as Card).color]}</span>
+          </div>
+
+          {/* Center */}
+          <div className="card-center">
+            <span className="card-center-number">{(card as Card).number}</span>
+            <span className="card-center-symbol">{COLOR_SYMBOLS[(card as Card).color]}</span>
+          </div>
+
+          {/* Bottom-right corner (rotated) */}
+          <div className="card-corner card-corner--bottom">
+            <span>{(card as Card).number}</span>
+            <span className="card-corner-symbol">{COLOR_SYMBOLS[(card as Card).color]}</span>
+          </div>
         </>
       )}
     </div>

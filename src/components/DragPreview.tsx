@@ -32,7 +32,7 @@ export function DragPreview() {
     position: "fixed",
     left: 0,
     top: 0,
-    transform: `translate(${dragState.currentX - 28}px, ${dragState.currentY - 39}px)`,
+    transform: `translate(${dragState.currentX - 32}px, ${dragState.currentY - 45}px)`,
     pointerEvents: "none",
     zIndex: 10000,
     opacity: 0.9,
