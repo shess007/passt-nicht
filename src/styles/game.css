@@ -562,6 +562,52 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Drag and Drop ────────────────────────────────────────────── */
+
+.card--dragging {
+  opacity: 0.3;
+  transform: none !important;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.4) !important;
+}
+
+.discard-pile--drag-target {
+  border-color: var(--accent);
+  border-style: dashed;
+  animation: drop-target-pulse 1s ease-in-out infinite;
+}
+
+.my-display-cards--drag-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+  animation: drop-target-pulse 1s ease-in-out infinite;
+}
+
+.discard-pile--drag-hover {
+  border-color: var(--accent) !important;
+  border-style: solid !important;
+  box-shadow: 0 0 20px rgba(0,255,204,0.6), inset 0 0 12px rgba(0,255,204,0.15);
+  background: rgba(0,255,204,0.05);
+}
+
+.my-display-cards--drag-hover {
+  outline-color: var(--accent) !important;
+  outline-style: solid !important;
+  background: rgba(0,255,204,0.03);
+  box-shadow: inset 0 0 12px rgba(0,255,204,0.1);
+}
+
+@keyframes drop-target-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.game-board--dragging .opponents-area,
+.game-board--dragging .scores-area,
+.game-board--dragging .draw-pile {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
 /* ─── Action Bar ────────────────────────────────────────────────── */
 .action-bar {
   display: flex;

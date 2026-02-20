@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { useGameStore } from "../store/gameStore";
 import { CardView, CardBack } from "./Card";
 import { JokerWishModal } from "./JokerWishModal";
+import { DragPreview } from "./DragPreview";
+import { useDropTarget } from "../hooks/useDropTarget";
 import { cardMatchesDiscard } from "../game/engine";
 import { isJoker, CARD_COLORS } from "../game/types";
 import type { AnyCard, Card, Player } from "../game/types";
@@ -14,6 +17,8 @@ export function GameBoard() {
     playToDiscard,
     playToDisplay,
     restartGame,
+    dragState,
+    endDrag,
   } = useGameStore();
 
   if (!gameState) return null;
@@ -56,11 +61,78 @@ export function GameBoard() {
     }
   }
 
+  // Drag: determine what the dragged card can do
+  const draggedCard = dragState
+    ? myHand.find((c) => c.id === dragState.cardId) ??
+      Object.values(myDisplay.stacks)
+        .flatMap((s) => s ?? [])
+        .find((c) => c.id === dragState.cardId)
+    : null;
+
+  const dragCanDiscard = draggedCard ? playableToDiscard.has(draggedCard.id) : false;
+  const dragCanDisplay =
+    !!draggedCard &&
+    dragState?.from === "hand" &&
+    !isJoker(draggedCard);
+
+  // Drop target hooks
+  const discardDrop = useDropTarget(dragCanDiscard);
+  const displayDrop = useDropTarget(!!dragCanDisplay);
+
+  // Global pointerup handler for resolving drops
+  useEffect(() => {
+    if (!dragState) return;
+
+    const handlePointerUp = (e: PointerEvent) => {
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+
+      for (const el of elements) {
+        if (el.closest(".discard-pile") && dragCanDiscard) {
+          playToDiscard(dragState.cardId, dragState.from);
+          endDrag();
+          return;
+        }
+        if (el.closest(".my-display-cards") && dragCanDisplay) {
+          playToDisplay(dragState.cardId);
+          endDrag();
+          return;
+        }
+      }
+
+      endDrag();
+    };
+
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => window.removeEventListener("pointerup", handlePointerUp);
+  }, [dragState, dragCanDiscard, dragCanDisplay, playToDiscard, playToDisplay, endDrag]);
+
+  // Cancel drag on Escape
+  useEffect(() => {
+    if (!dragState) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") endDrag();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [dragState, endDrag]);
+
+  // Cancel drag if turn changes
+  useEffect(() => {
+    if (dragState && !isMyTurn) endDrag();
+  }, [dragState, isMyTurn, endDrag]);
+
+  // Prevent scroll during drag on touch
+  useEffect(() => {
+    if (!dragState) return;
+    const prevent = (e: TouchEvent) => e.preventDefault();
+    document.body.addEventListener("touchmove", prevent, { passive: false });
+    return () => document.body.removeEventListener("touchmove", prevent);
+  }, [dragState]);
+
   const handleCardClick = (card: AnyCard, from: "hand" | "display") => {
     if (!isMyTurn) return;
 
     if (selectedCardId === card.id) {
-      // Double click = deselect
       selectCard(null);
       return;
     }
@@ -72,7 +144,6 @@ export function GameBoard() {
     if (!selectedCardId) return;
 
     if (target === "discard") {
-      // Check if card is in hand or display
       const inHand = myHand.find((c) => c.id === selectedCardId);
       if (inHand) {
         playToDiscard(selectedCardId, "hand");
@@ -106,7 +177,7 @@ export function GameBoard() {
     : null;
 
   return (
-    <div className="game-board">
+    <div className={`game-board ${dragState ? "game-board--dragging" : ""}`}>
       {/* Scores */}
       <div className="scores-area">
         {players.map((p, i) => (
@@ -136,8 +207,8 @@ export function GameBoard() {
                 {isActive && "► "}{opp.name}
               </div>
               <div className="opponent-info">
-                <span>🃏 {opp.handCount}</span>
-                <span>📊 {opp.score}pts</span>
+                <span>{opp.handCount} cards</span>
+                <span>{opp.score}pts</span>
               </div>
               <div className="opponent-display">
                 {CARD_COLORS.map((color) => {
@@ -183,7 +254,10 @@ export function GameBoard() {
 
         <div className="pile">
           <div
-            className={`discard-pile ${canPlayToDiscard ? "discard-pile--droppable" : ""}`}
+            ref={discardDrop.ref}
+            className={`discard-pile ${canPlayToDiscard ? "discard-pile--droppable" : ""} ${
+              dragState && dragCanDiscard ? "discard-pile--drag-target" : ""
+            } ${discardDrop.isOver && dragCanDiscard ? "discard-pile--drag-hover" : ""}`}
             onClick={() => canPlayToDiscard && handlePlaySelected("discard")}
           >
             {discardPile.topCard && (
@@ -219,7 +293,12 @@ export function GameBoard() {
       {/* My Display */}
       <div className="my-display-area">
         <span className="my-display-label">DISPLAY</span>
-        <div className="my-display-cards">
+        <div
+          ref={displayDrop.ref}
+          className={`my-display-cards ${
+            dragState && dragCanDisplay ? "my-display-cards--drag-target" : ""
+          } ${displayDrop.isOver && dragCanDisplay ? "my-display-cards--drag-hover" : ""}`}
+        >
           {CARD_COLORS.map((color) => {
             const stack = myDisplay.stacks[color];
             if (!stack || stack.length === 0) return null;
@@ -233,6 +312,8 @@ export function GameBoard() {
                   playable={isPlayable}
                   disabled={!isMyTurn}
                   onClick={() => handleCardClick(topCard, "display")}
+                  draggable={isMyTurn}
+                  dragFrom="display"
                 />
                 {stack.length > 1 && (
                   <span style={{
@@ -273,6 +354,8 @@ export function GameBoard() {
                 playable={isPlayable}
                 disabled={!isMyTurn}
                 onClick={() => handleCardClick(card, "hand")}
+                draggable={isMyTurn}
+                dragFrom="hand"
               />
             );
           })}
@@ -286,6 +369,9 @@ export function GameBoard() {
 
       {/* Joker Wish Modal */}
       <JokerWishModal />
+
+      {/* Drag Preview */}
+      <DragPreview />
 
       {/* Round End Overlay */}
       {(phase === "round_end" || phase === "game_over") && (

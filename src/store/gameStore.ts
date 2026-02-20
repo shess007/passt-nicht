@@ -19,6 +19,14 @@ interface GameStore {
   selectedCardId: string | null;
   showJokerWishModal: boolean;
   pendingJokerCardId: string | null;
+  dragState: {
+    cardId: string;
+    from: "hand" | "display";
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  } | null;
 
   // Actions
   setPlayerName: (name: string) => void;
@@ -32,6 +40,9 @@ interface GameStore {
   restartGame: () => void;
   selectCard: (cardId: string | null) => void;
   clearError: () => void;
+  startDrag: (cardId: string, from: "hand" | "display", x: number, y: number) => void;
+  updateDrag: (x: number, y: number) => void;
+  endDrag: () => void;
 }
 
 const PARTY_HOST =
@@ -163,4 +174,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   selectCard: (cardId) => set({ selectedCardId: cardId }),
   clearError: () => set({ error: null }),
+  dragState: null,
+  startDrag: (cardId, from, x, y) =>
+    set({ dragState: { cardId, from, startX: x, startY: y, currentX: x, currentY: y }, selectedCardId: null }),
+  updateDrag: (x, y) => {
+    const { dragState } = get();
+    if (!dragState) return;
+    set({ dragState: { ...dragState, currentX: x, currentY: y } });
+  },
+  endDrag: () => set({ dragState: null }),
 }));

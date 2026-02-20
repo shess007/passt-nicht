@@ -1,5 +1,6 @@
 import type { AnyCard } from "../game/types";
 import { isJoker } from "../game/types";
+import { useDrag } from "../hooks/useDrag";
 
 interface CardProps {
   card: AnyCard;
@@ -8,6 +9,8 @@ interface CardProps {
   playable?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  draggable?: boolean;
+  dragFrom?: "hand" | "display";
 }
 
 const COLOR_SYMBOLS: Record<string, string> = {
@@ -17,7 +20,11 @@ const COLOR_SYMBOLS: Record<string, string> = {
   yellow: "★",
 };
 
-export function CardView({ card, size = "normal", selected, playable, disabled, onClick }: CardProps) {
+export function CardView({
+  card, size = "normal", selected, playable, disabled, onClick,
+  draggable = false, dragFrom = "hand",
+}: CardProps) {
+  const { onPointerDown, isBeingDragged } = useDrag(card.id, dragFrom, draggable && !disabled);
   const joker = isJoker(card);
   const colorClass = joker ? "joker" : card.color;
 
@@ -28,12 +35,19 @@ export function CardView({ card, size = "normal", selected, playable, disabled, 
     selected && "card--selected",
     playable && "card--playable",
     disabled && "card--disabled",
+    isBeingDragged && "card--dragging",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <div className={classes} onClick={disabled ? undefined : onClick}>
+    <div
+      className={classes}
+      onClick={disabled ? undefined : onClick}
+      onPointerDown={onPointerDown}
+      onContextMenu={draggable ? (e) => e.preventDefault() : undefined}
+      style={draggable ? { touchAction: "none" } : undefined}
+    >
       {joker ? (
         <>
           <span className="card-joker-icon">✦</span>
